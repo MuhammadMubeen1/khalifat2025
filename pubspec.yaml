@@ -1,0 +1,76 @@
+name: KhilafatCola
+description: "Flutter Project"
+publish_to: 'none'
+version: 1.0.9+26
+environment:
+  sdk: '>=3.2.5 <4.0.0'
+  
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  permission_handler: 
+  connectivity_plus: ^4.0.2
+  camera: ^0.10.5
+  
+  
+  image_picker:
+  device_info_plus: ^9.1.2
+  # google_maps_flutter: ^2.1.1
+  google_maps_flutter: ^2.1.1
+  flutter_image_compress: ^1.1.0
+  geolocator: ^8.2.0
+  upgrader:
+  
+  geocoding: ^2.0.4
+ 
+  http: ^0.13.3
+  google_fonts: ^4.0.4
+  cached_network_image:
+  animate_do:
+  dashed_circular_progress_bar:
+  map_launcher:
+  flutter_launcher_icons:
+  reorderables:
+  flutter_polyline_points:
+  hive: 
+  hive_flutter: 
+  path_provider: 
+  build_runner: 
+  hive_generator: 
+  intl:
+  mask_text_input_formatter:
+  shared_preferences:
+  uuid:
+  mobile_device_identifier:
+  fluttertoast:
+  auto_size_text:
+  dio:
+  path:
+  panara_dialogs:
+  restart_app:
+  new_version_plus:
+  get:
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+    # Added for setting app icons
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+# Flutter Launcher Icons Configuration
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/launcher.png"
+  # adaptive_icon_background: "#ffffff"
+  # adaptive_icon_foreground: "assets/app_icon_foreground.png"
