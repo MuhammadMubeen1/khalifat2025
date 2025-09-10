@@ -10,7 +10,9 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.2
-  permission_handler: 
+  permission_handler:
+ 
+  flutter_inappwebview: 
   connectivity_plus: ^4.0.2
   camera: ^0.10.5
   

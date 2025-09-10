@@ -40,13 +40,15 @@ class ShopTaggingModelAdapter extends TypeAdapter<ShopTaggingModel> {
       secondaryPhoneNo: fields[20] as String,
       isSynced: fields[21] as bool,
       createdAt: fields[22] as DateTime,
+      id: fields[23] as int,
+      isDuplicate: fields[24] as bool, // Add this field
     );
   }
 
   @override
   void write(BinaryWriter writer, ShopTaggingModel obj) {
     writer
-      ..writeByte(23)
+      ..writeByte(25) // Changed from 24 to 25
       ..writeByte(0)
       ..write(obj.userId)
       ..writeByte(1)
@@ -92,7 +94,11 @@ class ShopTaggingModelAdapter extends TypeAdapter<ShopTaggingModel> {
       ..writeByte(21)
       ..write(obj.isSynced)
       ..writeByte(22)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(23)
+      ..write(obj.id)
+      ..writeByte(24)
+      ..write(obj.isDuplicate); // Add this field
   }
 
   @override

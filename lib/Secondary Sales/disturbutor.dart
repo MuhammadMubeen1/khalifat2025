@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:KhilafatCola/Secondary%20Sales/drawers2.dart';
 import 'package:KhilafatCola/Supervisor/sup_shoptaggingscreen.dart';
 import 'package:KhilafatCola/Supervisor/sup_teamscreen.dart';
 import 'package:KhilafatCola/drawer/drawer.dart';
@@ -12,13 +13,11 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:animate_do/animate_do.dart';
-
 import 'package:dashed_circular_progress_bar/dashed_circular_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-
 import '../Attendance/attendance_details_screen.dart';
 import '../Attendance/shopvisitdetails.dart';
 import '../Route/sup_routelist.dart';
@@ -30,14 +29,14 @@ import '../widgets/const.dart';
 String shopname = '';
 String shopAddress = '';
 
-class MarkAttedence extends StatefulWidget {
-  const MarkAttedence({super.key});
+class Disturbutor extends StatefulWidget {
+  const Disturbutor({super.key});
 
   @override
-  State<MarkAttedence> createState() => _ZSMDashboardState();
+  State<Disturbutor> createState() => _ZSMDashboardState();
 }
 
-class _ZSMDashboardState extends State<MarkAttedence>
+class _ZSMDashboardState extends State<Disturbutor>
     with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late Timer _timer;
@@ -350,134 +349,8 @@ class _ZSMDashboardState extends State<MarkAttedence>
       });
     }
   }
-  Future<void> MarkAttendancewithDealershipID(
-    bool? marks,
-    String? reason, 
-  ) async {
-    setState(() {
-      isLoading = true;
-    }); 
 
-    // API URL
-    String url = '${Constants.BASE_URL}/api/App/MarkAttendance';
-
-    // Request headers
-    Map<String, String> headers = {
-      'Authorization': '6XesrAM2Nu',
-      'Content-Type': 'application/json'
-    };
-
-    // Request body
-    Map<String, dynamic> body = {
-      "UserId": userid,
-      "IsPresent": marks,
-      "Reason": reason,
-      "lat": currentlat,
-      "lng": currentlng,
-      'appDateTime': getCurrentDateTime(),
-      'dealershipId': firstDealershipId
-    };
-
-    try {
-      // Send POST request
-      http.Response response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-        body: json.encode(body),
-      );
-      print('ResponseAttendance${response.request}');
-      // Check if the request was successful
-      if (response.statusCode == 200) {
-        await _getCurrentLocations();
-        final data = jsonDecode(response.body);
-        final status = data['Status'];
-        final message = data['Message'];
-        print('StatusAttendance$status');
-        setState(() {
-          isLoading = false;
-        });
-
-        // After getting a response from the API
-
-        print('user role ${response.body}');
-        if (message == 'Attendance Mark Successfully') {
-          // Attendance Already Mark
-          startNewMark();
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Center(child: Text("Attendane Marked ")),
-                content: const Text(
-                    'You are requested to restart the application to sync the server date time with attendance'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Restart.restartApp();
-                      // Close the application
-                      Navigator.pop(context);
-                    },
-                    child: const Text("Close"),
-                  ),
-                ],
-              );
-            },
-          );
-          // Fluttertoast.showToast(
-          //     msg: message,
-          //     toastLength: Toast.LENGTH_SHORT,
-          //     gravity: ToastGravity.BOTTOM, // Also possible "TOP" and "CENTER"
-          //     backgroundColor: Colors.white,
-          //     textColor: Colors.black);
-
-          // Navigate to the home screen
-        } else if (message == 'Attendance Already Mark') {
-          startShift();
-
-          // Fluttertoast.showToast(
-          //     msg: message,
-          //     toastLength: Toast.LENGTH_SHORT,
-          //     gravity: ToastGravity.BOTTOM, // Also possible "TOP" and "CENTER"
-          //     backgroundColor: Colors.white,
-          //     textColor: Colors.black);
-          // Show error if login is not successful
-        } else if (message == "Today is your weekly Off!") {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text("Alert"),
-                content: Text(message),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            },
-          );
-        }
-      }
-    } catch (error) {
-      // Fluttertoast.showToast(
-      //     msg: '',
-      //     toastLength: Toast.LENGTH_SHORT,
-      //     gravity: ToastGravity.BOTTOM, // Also possible "TOP" and "CENTER"
-      //     backgroundColor: Colors.white,
-      //     textColor: Colors.black);
-      print('Error during login: $error');
-    } finally {
-      // Once API call is done, hide the loader and show the button again
-      setState(() {
-        isLoading = false;
-        makeattendance = false;
-      });
-    }
-  }
-
+  
   Future<void> fetchDashboardData() async {
     final String apiUrl =
         '${Constants.BASE_URL}/api/App/GetSupervisorDashboardByUserId?userId=$userid&appDateTime=${getCurrentDateTime()}';
@@ -625,11 +498,7 @@ class _ZSMDashboardState extends State<MarkAttedence>
   //   // fetchSalesmanTasks(); // Call the function when the widget is initialized
   // }
 
-
-
-
-@override
-
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
@@ -677,6 +546,7 @@ class _ZSMDashboardState extends State<MarkAttedence>
       // You might want to show an error to the user here
     }
   }
+
   DateTime addHoursToTime(String startTime, int hoursToAdd) {
     // Parse the start time string into a DateTime object
     final now = DateTime.now();
@@ -1469,7 +1339,7 @@ class _ZSMDashboardState extends State<MarkAttedence>
           backgroundColor: Colors.red.shade50,
           extendBodyBehindAppBar: true,
           key: _scaffoldKey,
-                drawer: const CustomDrawer(),
+          drawer: const DisturbutorDrawerss(),
           body: Stack(
             children: [
               SafeArea(
@@ -1487,16 +1357,16 @@ class _ZSMDashboardState extends State<MarkAttedence>
                                       'assets/images/background.jpg',
                                     ),
                                     fit: BoxFit.cover),
-                                    // gradient: LinearGradient(
-                                    //   colors: [
-                                    //     Color(
-                                    //         0xFFB71234), // A richer Coca-Cola Red
-                                    //     Color(
-                                    //         0xFFF02A2A), // A slightly darker red
-                                    //   ],
-                                    //   begin: Alignment.topLeft,
-                                    //   end: Alignment.bottomRight,
-                                    // ),
+                                // gradient: LinearGradient(
+                                //   colors: [
+                                //     Color(
+                                //         0xFFB71234), // A richer Coca-Cola Red
+                                //     Color(
+                                //         0xFFF02A2A), // A slightly darker red
+                                //   ],
+                                //   begin: Alignment.topLeft,
+                                //   end: Alignment.bottomRight,
+                                // ),
                                 borderRadius: BorderRadius.circular(10)),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.start,
@@ -1506,43 +1376,25 @@ class _ZSMDashboardState extends State<MarkAttedence>
                                       top: 10, left: 10, right: 10),
                                   child: Row(
                                     mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.menu,
-                                                size: 30, color: Colors.white),
-                                            onPressed: _openDrawer,
-                                          ),
-                                          CircleAvatar(
-                                            radius: 20,
-                                            backgroundColor: Colors.grey[300],
-                                            backgroundImage: userImage !=
-                                                        null &&
-                                                    userImage.isNotEmpty
-                                                ? (userImage.startsWith(
-                                                            'data:image')
-                                                        ? MemoryImage(
-                                                            base64Decode(
-                                                                userImage
-                                                                    .split(',')
-                                                                    .last))
-                                                        : NetworkImage(
-                                                            '$userImage'))
-                                                    as ImageProvider
-                                                : const AssetImage(
-                                                    'assets/default_avatar.png'),
-                                      )
+                                      IconButton(
+                                        icon: const Icon(Icons.menu,
+                                            size: 30, color: Colors.white),
+                                        onPressed: _openDrawer,
+                                      ),
+                                    
                                     ],
                                   ),
                                 ),
                                 Container(
-                                      // color: Colors.blue.shade400,
-                                      // decoration: BoxDecoration(
-                                      //   image: DecorationImage(image: AssetImage('assets/schoolbackground.jpg'),fit: BoxFit.cover),
-                                      //     gradient: LinearGradient(begin: Alignment.topCenter, colors: [
-                                      //       Colors.white,
-                                      //       Colors.green.shade400
-                                      //     ])),
+                                  // color: Colors.blue.shade400,
+                                  // decoration: BoxDecoration(
+                                  //   image: DecorationImage(image: AssetImage('assets/schoolbackground.jpg'),fit: BoxFit.cover),
+                                  //     gradient: LinearGradient(begin: Alignment.topCenter, colors: [
+                                  //       Colors.white,
+                                  //       Colors.green.shade400
+                                  //     ])),
                                   child: Padding(
                                     padding: const EdgeInsets.only(
                                         left: 5, right: 5, bottom: 10, top: 5),
@@ -1642,7 +1494,6 @@ class _ZSMDashboardState extends State<MarkAttedence>
                                                               ),
                                                               Text(
                                                                 employeeDesination,
-                                                               
                                                                 style: GoogleFonts.lato(
                                                                     fontSize:
                                                                         10,
@@ -1721,320 +1572,26 @@ class _ZSMDashboardState extends State<MarkAttedence>
                                                     ],
                                                   ),
                                                 )),
-                                            showStartButton && !shiftStarted
-                                                ? InkWell(
-                                                    onTap: () {
-                                                      mark != true &&
-                                                              isPresent !=
-                                                                  "false"
-                                                          ? _showAttendanceShee(
-                                                              context)
-                                                          : '';
-                                                      // _showAttendanceSheet(context);
-                                                    },
-                                                    child: Container(
-                                                        height: 100,
-                                                        width: 100,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(90),
-                                                          gradient: mark !=
-                                                                      true &&
-                                                                  isPresent !=
-                                                                      "false"
-                                                              ? const LinearGradient(
-                                                                  colors: [
-                                                                    Color
-                                                                        .fromRGBO(
-                                                                            0,
-                                                                            66,
-                                                                            37,
-                                                                            1),
-                                                                    Color
-                                                                        .fromRGBO(
-                                                                            0,
-                                                                            66,
-                                                                            61,
-                                                                            1)
-                                                                    // A richer Coca-Cola Red
-                                                                  ],
-                                                                  begin: Alignment
-                                                                      .topLeft,
-                                                                  end: Alignment
-                                                                      .bottomRight,
-                                                                )
-                                                              : const LinearGradient(
-                                                                  colors: [
-                                                                    Color.fromRGBO(
-                                                                        0,
-                                                                        153,
-                                                                        153,
-                                                                        153),
-                                                                    Color
-                                                                        .fromRGBO(
-                                                                            0,
-                                                                            244,
-                                                                            244,
-                                                                            244)
-                                                                    // A richer Coca-Cola Red
-                                                                  ],
-                                                                  begin: Alignment
-                                                                      .topLeft,
-                                                                  end: Alignment
-                                                                      .bottomRight,
-                                                                ),
-                                                        ),
-                                                        child: Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            mark != true &&
-                                                                    isPresent !=
-                                                                        "false"
-                                                                ? Text(
-                                                                    'Mark',
-                                                                    style: GoogleFonts.lato(
-                                                                        fontSize:
-                                                                            13,
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontWeight:
-                                                                            FontWeight.bold),
-                                                                  )
-                                                                : const SizedBox(),
-                                                            mark != true &&
-                                                                    isPresent !=
-                                                                        "false"
-                                                                    ? Text(
-                                                                    'Attendance',
-                                                                    style: GoogleFonts.lato(
-                                                                        fontSize:
-                                                                            13,
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontWeight:
-                                                                            FontWeight.bold),
-                                                                  )
-                                                                : Text(
-                                                                    'Leave',
-                                                                    style: GoogleFonts.lato(
-                                                                        fontSize:
-                                                                            13,
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontWeight:
-                                                                            FontWeight.bold),
-                                                                  ),
-                                                          ],
-                                                        )),
-                                                  )
-                                                : SizedBox(
-                                                    height: 120,
-                                                    width: 100,
-                                                    child: Column(
-                                                      children: [
-                                                        isCheckOut == true
-                                                            ? const SizedBox
-                                                                .shrink()
-                                                            : DashedCircularProgressBar
-                                                                .aspectRatio(
-                                                                aspectRatio: 1,
-                                                                // width ÷ height
-                                                                valueNotifier:
-                                                                    _valueNotifier,
 
-                                                                progress:
-                                                                    // (remainingTime!
-                                                                    //         .inSeconds)
-                                                                    32400 /
-                                                                        32400 *
-                                                                        100,
-                                                                startAngle: 225,
-                                                                sweepAngle: 270,
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .green,
-                                                                backgroundColor:
-                                                                    const Color(
-                                                                        0xffeeeeee),
-                                                                foregroundStrokeWidth:
-                                                                    10,
-                                                                backgroundStrokeWidth:
-                                                                    10,
-                                                                animation: true,
-                                                                seekSize: 6,
-                                                                seekColor:
-                                                                    const Color(
-                                                                        0xffeeeeee),
-                                                                child: Center(
-                                                                  child: ValueListenableBuilder(
-                                                                      valueListenable: _valueNotifier,
-                                                                      builder: (_, double value, __) => Column(
-                                                                            mainAxisSize:
-                                                                                MainAxisSize.min,
-                                                                            children: [
-                                                                              Text(
-                                                                                formatRemainingTime(remainingTime),
-                                                                                style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                                                              ),
-                                                                              Text(
-                                                                                'Remaining Time',
-                                                                                style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 8),
-                                                                              ),
-                                                                            ],
-                                                                          )),
-                                                                ),
-                                                              ),
-                                                        // isCheckOut == false ?
-                                                        isCheckOut == true
-                                                            ? Container(
-                                                                width: 100,
-                                                                height: 100,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .withOpacity(
-                                                                          .3),
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                                child:
-                                                                    const Center(
-                                                                  child: Text(
-                                                                    'Checked Out',
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .center,
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontSize:
-                                                                          14,
-                                                                      // Adjust font size as needed
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white, // Adjust text color if needed
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              )
-                                                            : SizedBox(
-                                                                width: 100,
-                                                                height: 20,
-                                                                child:
-                                                                    FilledButton(
-                                                                  style: FilledButton.styleFrom(
-                                                                      backgroundColor:
-                                                                          Colors
-                                                                              .white),
-                                                                  onPressed:
-                                                                      () async {
-                                                                    if (IsDistCompForAtten ==
-                                                                        true) {
-                                                                      if (dealershipInformation
-                                                                          .isNotEmpty) {
-                                                                        if (distanceInMeters <=
-                                                                            50) {
-                                                                          showCheckoutConfirmationDialog();
+                                            Container(
+                                              height: 100,
+                                              width: 100,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: ClipOval(
+                                                child: Image.asset(
+                                                  'assets/images/launcher.png', // replace with your image path
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            )
 
-                                                                          // showModernDialog(
-                                                                          //     context,
-                                                                          //     "Success",
-                                                                          //     "Your Attendance has been marked.",
-                                                                          //     "Proceed",
-                                                                          //         () {},
-                                                                          //     PanaraDialogType.success);
+                                          
 
-                                                                          // Close the dialog
-                                                                          // mark = false;
-                                                                        } else {
-                                                                          showDialog(
-                                                                            context:
-                                                                                context,
-                                                                            builder:
-                                                                                (BuildContext context) {
-                                                                              return AlertDialog(
-                                                                                title: const Text("Location Alert"),
-                                                                                content: const Text("You Must be within 50 meters in the distributor area."),
-                                                                                actions: [
-                                                                                  TextButton(
-                                                                                    onPressed: () {
-                                                                                      Navigator.of(context).pop(); // Close the dialog
-                                                                                    },
-                                                                                    child: const Text("Close"),
-                                                                                  ),
-                                                                                ],
-                                                                              );
-                                                                            },
-                                                                          );
-                                                                          // showModernDialog(
-                                                                          //     context,
-                                                                          //     "Location Alert",
-                                                                          //     "You Must be within 50 meters in the distributor area.",
-                                                                          //     "Proceed",
-                                                                          //         () {},
-                                                                          //     PanaraDialogType.warning);
-                                                                        }
-                                                                      } else {
-                                                                        print(
-                                                                            'sss');
-                                                                        showDialog(
-                                                                          context:
-                                                                              context,
-                                                                          builder:
-                                                                              (BuildContext context) {
-                                                                            return AlertDialog(
-                                                                              title: const Text("Alert"),
-                                                                              content: const Text("No Distributor has been assigned."),
-                                                                              actions: [
-                                                                                TextButton(
-                                                                                  onPressed: () {
-                                                                                    Navigator.of(context).pop(); // Close the dialog
-                                                                                  },
-                                                                                  child: const Text("Close"),
-                                                                                ),
-                                                                              ],
-                                                                            );
-                                                                          },
-                                                                        );
 
-                                                                        // showModernDialog(
-                                                                        //     context,
-                                                                        //     "Success",
-                                                                        //     "Your Attendance has been marked.",
-                                                                        //     "Proceed",
-                                                                        //         () {},
-                                                                        //     PanaraDialogType.success);
-                                                                      }
-                                                                    } else {
-                                                                      showCheckoutConfirmationDialog();
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    'Check Out',
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: Colors
-                                                                          .red,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              )
-                                                        // : SizedBox.shrink()
-                                                      ],
-                                                    ),
-                                                  )
+
                                           ],
                                         ),
                                       ],
@@ -2047,12 +1604,78 @@ class _ZSMDashboardState extends State<MarkAttedence>
                         ],
                       ),
                      
-                      
+                    const   SizedBox(height: 30,),
+                      Expanded(
+                          child: GridView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16.0,
+                          mainAxisSpacing: 18.0,
+                          childAspectRatio: 1.3,
+                        ),
+                        children: [
+                          _buildCard(
+                            context,
+                            "Today Orders",
+                            '$todayOrders',
+                            const ShopOrderScreen(),
+                            Icons.history,
+                          ),
+                          // _buildCard(
+                          //   context,
+                          //   "Pending Delivery",
+                          //   "10",
+                          //   OrderPendingScreen(),
+                          //   Icons.pending,
+                          // ),
+                          _buildCard(
+                            context,
+                            "Today Route Visit",
+                            "$todayRouteShopVisited/$totalRouteShopVisit",
+                            const RouteListScreen(),
+                            Icons.route,
+                          ),
+                          _buildCard(
+                            context,
+                            "Shop Tagging Request",
+                            "$totalPendingShopTaggingRequest",
+                            const ShopTaggingRequestScreen(),
+                            Icons.tag,
+                          ),
+                          _buildWideCard(
+                            context,
+                            "My Team",
+                            "Present : $presentTeamMember \nAbsent : $absentTeamMember\nOffline : $offlineTeamMember",
+                            const MyTeamScreen(),
+                            Icons.group,
+                          ),
+                        ],
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+              if (isLoading)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () {},
+                    // Disable touch events by providing an empty onTap
+                    // // child: Container(
+                    // //   color: Colors.red[50], // Semi-transparent overlay
+                    // //   child: const Center(
+                    // //     child: CircularProgressIndicator(),
+                    // //   ),
+                    // ),
+                  ),
+                ),
             ],
           ),
         ),
       ),
-                ]))));
+    );
   }
 
   Widget Present() {
@@ -2677,193 +2300,9 @@ class _ZSMDashboardState extends State<MarkAttedence>
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const SizedBox(height: 20),
-                          Text(
-                            'Mark Attendance',
-                            style: GoogleFonts.lato(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
+                        
                           const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.center, // Center the buttons
-                            children: [
-                              InkWell(
-                                onTap: () async {
-                                  print('DistanceMetere s$distanceInMeters');
-                                  if (IsDistCompForAtten == true) {
-                                    if (dealershipInformation.isNotEmpty) {
-                                      if (distanceInMeters <= 50) {
-                                        Navigator.of(context).pop();
-                                        await MarkAttendancewithDealershipID(
-                                            true, '');
-                                        // showModernDialog(
-                                        //     context,
-                                        //     "Success",
-                                        //     "Your Attendance has been marked.",
-                                        //     "Proceed",
-                                        //         () {},
-                                        //     PanaraDialogType.success);
-
-                                        // Close the dialog
-                                        mark = false;
-                                      } else {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title:
-                                                  const Text("Location Alert"),
-                                              content: const Text(
-                                                  "You Must be within 50 meters in the distributor area."),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context)
-                                                        .pop(); // Close the dialog
-                                                  },
-                                                  child: const Text("Close"),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                        // showModernDialog(
-                                        //     context,
-                                        //     "Location Alert",
-                                        //     "You Must be within 50 meters in the distributor area.",
-                                        //     "Proceed",
-                                        //         () {},
-                                        //     PanaraDialogType.warning);
-                                      }
-                                    } else {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text("Alert"),
-                                            content: const Text(
-                                                "No Distributor has been assigneds."),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context)
-                                                      .pop(); // Close the dialog
-                                                },
-                                                child: const Text("Close"),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-
-                                      // showModernDialog(
-                                      //     context,
-                                      //     "Success",
-                                      //     "Your Attendance has been marked.",
-                                      //     "Proceed",
-                                      //         () {},
-                                      //     PanaraDialogType.success);
-                                    }
-                                  } else {
-                                    Navigator.of(context).pop();
-                                    await MarkAttendance(true, '');
-                                    mark = false;
-                                    // showModernDialog(
-                                    //     context,
-                                    //     "Alert",
-                                    //     "No Distributor has been assigned",
-                                    //     "Proceed",
-                                    //         () {},
-                                    //     PanaraDialogType.warning);
-                                  }
-
-                                  // if(distanceInMeters == null && IsDistCompForAtten == true)
-                                  //   {
-                                  //     showModernDialog(
-                                  //         context,
-                                  //         "Alert",
-                                  //         "No distributor has been assigned to you.",
-                                  //         "Proceed",
-                                  //             () {},
-                                  //         PanaraDialogType.warning);
-                                  //     Navigator.of(context)
-                                  //         .pop();
-                                  //   }
-                                  // else  {
-                                  //
-                                  // } else {
-                                  //   // Navigator.of(context)
-                                  //   //     .pop();
-                                  //   // await MarkAttendance(true, '');
-                                  //   // Close the dialog
-                                  //   // mark = false;
-                                  //   showModernDialog(
-                                  //       context,
-                                  //       "Location Error",
-                                  //       "Your Attendance has been marked.",
-                                  //       "Proceed",
-                                  //       () {},
-                                  //       PanaraDialogType.warning);
-                                  // }
-                                },
-                                child: Container(
-                                  height: 60,
-                                  width: 140,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(50),
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color.fromRGBO(0, 66, 37, 1),
-                                        Color.fromRGBO(0, 66, 61, 1),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.4),
-                                        spreadRadius: 3,
-                                        blurRadius: 5,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        decoration: BoxDecoration(
-                                          image: const DecorationImage(
-                                            image: AssetImage(
-                                                'assets/images/present.png'),
-                                            // fit: BoxFit.cover,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        'Present',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 18,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                         
                               const SizedBox(width: 20),
                               InkWell(
                                 onTap: () {
@@ -2929,86 +2368,9 @@ class _ZSMDashboardState extends State<MarkAttedence>
                             ],
                           ),
                         ],
-                      ),
-                      if (isAbsentSelected)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Reason for Leave:',
-                                style: GoogleFonts.lato(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 10),
-                              TextField(
-                                controller: _commentController,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter your comment here...',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                ),
-                                maxLines: 2,
-                              ),
-                              const SizedBox(height: 10),
-                              InkWell(
-                                onTap: () {
-                                  final comment = _commentController.text;
-                                  if (comment.isEmpty) {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text("Validation Error"),
-                                          content: const Text(
-                                              "Comment must not be empty."),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context)
-                                                    .pop(); // Close the dialog
-                                              },
-                                              child: const Text("Close"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    showConfirmationDialog();
-                                  }
-                                },
-                                child: Center(
-                                  child: Container(
-                                    height: 30,
-                                    width: 100,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFFB71234),
-                                          Color(0xFFF02A2A),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(90),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Send',
-                                        style: GoogleFonts.lato(
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
+                      
+                      
+                    
                   );
                 },
               ),

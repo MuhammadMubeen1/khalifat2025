@@ -5,7 +5,7 @@ import 'package:KhilafatCola/Shop_Tagging/shop_tagging_history.dart';
 import 'package:KhilafatCola/Shop_Tagging/shop_tagging_model.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -408,11 +408,39 @@ class _ShopTaggingState extends State<ShopTaggingOffline> {
     return formatter.format(now);
   }
 
-Future<void> _saveShopTagging() async {
+  // Check if shop with same phone number already exists in local storage
+  bool _isShopAlreadyExists(String phoneNo) {
+    final allShops = _shopTaggingBox.values.toList();
+    return allShops.any((shop) => shop.phoneNo == phoneNo);
+  }
+
+  Future<void> _saveShopTagging() async {
+    // Check if shop with same phone number already exists
+    if (_isShopAlreadyExists(_phoneno.text)) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Duplicate Phone Number"),
+            content: const Text(
+              "A shop with this phone number already exists in offline storage.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
 
     final shopTagging = ShopTaggingModel(
-
-      id: 0, 
+      id: 0,
       userId: userid ?? '',
       TerritoryId: _selecteddistCategory,
       shopName: _shopname.text,
@@ -433,16 +461,49 @@ Future<void> _saveShopTagging() async {
       nesfrutaFridge:
           _nesfrutaController.text.isEmpty ? '0' : _nesfrutaController.text,
       othersFridge: _otherController.text.isEmpty ? '0' : _otherController.text,
-      appDateTime: getCurrentDateTime(),
+      appDateTime: DateTime(2020, 1, 1).toIso8601String(),
       landmark: _landmark.text.isEmpty ? '' : _landmark.text,
       secondaryPhoneNo:
           _secondaryPhone.text.isEmpty ? '' : _secondaryPhone.text,
       isSynced: false,
-      createdAt: DateTime.now(),
-
+      createdAt: DateTime.now(), // Use current date instead of placeholder
     );
 
+    // Print all data to console
+    print('=== SHOP TAGGING DATA BEING SAVED ===');
+    print('id: ${shopTagging.id}');
+    print('userId: ${shopTagging.userId}');
+    print('TerritoryId: ${shopTagging.TerritoryId}');
+    print('shopName: ${shopTagging.shopName}');
+    print('phoneNo: ${shopTagging.phoneNo}');
+    print('ownerName: ${shopTagging.ownerName}');
+    print('address: ${shopTagging.address}');
+    print('openingTime: ${shopTagging.openingTime}');
+    print('closingTime: ${shopTagging.closingTime}');
+    print('imageExtension: ${shopTagging.imageExtension}');
+    print('lat: ${shopTagging.lat}');
+    print('lng: ${shopTagging.lng}');
+    print(
+        'imageFileSource length: ${shopTagging.imageFileSource.length} characters');
+    print('shopTypeId: ${shopTagging.shopTypeId}');
+    print('pepsiFridge: ${shopTagging.pepsiFridge}');
+    print('cokeFridge: ${shopTagging.cokeFridge}');
+    print('nestleFridge: ${shopTagging.nestleFridge}');
+    print('nesfrutaFridge: ${shopTagging.nesfrutaFridge}');
+    print('othersFridge: ${shopTagging.othersFridge}');
+    print('appDateTime: ${shopTagging.appDateTime}');
+    print('landmark: ${shopTagging.landmark}');
+    print('secondaryPhoneNo: ${shopTagging.secondaryPhoneNo}');
+    print('isSynced: ${shopTagging.isSynced}');
+    print('createdAt: ${shopTagging.createdAt}');
+    print('Number of images: ${base64Images.length}');
+    print('=====================================');
+
     await _shopTaggingBox.add(shopTagging);
+
+    // Print confirmation of saving
+    print('Shop tagging data saved to local storage successfully!');
+    print('=====================================');
 
     showDialog(
       context: context,
@@ -470,6 +531,7 @@ Future<void> _saveShopTagging() async {
       },
     );
   }
+
   Future<bool> _shopTaggingOnline(ShopTaggingModel shopTagging) async {
     String url = '${Constants.BASE_URL}/api/App/SaveShopTaggingByTerritoryId';
 
@@ -495,14 +557,16 @@ Future<void> _saveShopTagging() async {
       "imageExtension": shopTagging.imageExtension,
       "lat": shopTagging.lat,
       "lng": shopTagging.lng,
-      "imageFileSource":imageSources, // Send as array instead of concatenated string
+      "imageFileSource":
+          imageSources, // Send as array instead of concatenated string
       "shopTypeId": shopTagging.shopTypeId,
       "pepsiFridge": shopTagging.pepsiFridge,
       "cokeFridge": shopTagging.cokeFridge,
       "nestleFridge": shopTagging.nestleFridge,
       "nesfrutaFridge": shopTagging.nesfrutaFridge,
       "othersFridge": shopTagging.othersFridge,
-      "appDateTime": shopTagging.appDateTime,
+      "appDateTime": DateTime(2020, 1, 1).toIso8601String(),
+      //  shopTagging.appDateTime,
       "landmark": shopTagging.landmark,
       "secondaryPhoneNo": shopTagging.secondaryPhoneNo,
     };
@@ -517,6 +581,31 @@ Future<void> _saveShopTagging() async {
     print(jsonString);
     print('========================');
 
+    // Print all function parameters
+    print('=== FUNCTION PARAMETERS ===');
+    print('ShopTaggingModel details:');
+    print('  userId: ${shopTagging.userId}');
+    print('  TerritoryId: ${shopTagging.TerritoryId}');
+    print('  shopName: ${shopTagging.shopName}');
+    print('  phoneNo: ${shopTagging.phoneNo}');
+    print('  ownerName: ${shopTagging.ownerName}');
+    print('  address: ${shopTagging.address}');
+    print('  openingTime: ${shopTagging.openingTime}');
+    print('  closingTime: ${shopTagging.closingTime}');
+    print('  imageExtension: ${shopTagging.imageExtension}');
+    print('  lat: ${shopTagging.lat}');
+    print('  lng: ${shopTagging.lng}');
+    print('  imageFileSource (original): ${shopTagging.imageFileSource}');
+    print('  shopTypeId: ${shopTagging.shopTypeId}');
+    print('  pepsiFridge: ${shopTagging.pepsiFridge}');
+    print('  cokeFridge: ${shopTagging.cokeFridge}');
+    print('  nestleFridge: ${shopTagging.nestleFridge}');
+    print('  nesfrutaFridge: ${shopTagging.nesfrutaFridge}');
+    print('  othersFridge: ${shopTagging.othersFridge}');
+    print('  landmark: ${shopTagging.landmark}');
+    print('  secondaryPhoneNo: ${shopTagging.secondaryPhoneNo}');
+    print('===========================');
+
     try {
       final response = await _dio.post(
         url,
@@ -527,12 +616,18 @@ Future<void> _saveShopTagging() async {
       print('=== API RESPONSE ===');
       print('Status Code: ${response.statusCode}');
       print('Response Data: ${response.data}');
+      print('Response Headers: ${response.headers}');
       print('====================');
 
       return response.statusCode == 200;
     } catch (e) {
       print('=== API ERROR ===');
       print('Error: $e');
+      if (e is DioError) {
+        print('Dio Error Type: ${e.type}');
+        print('Error Message: ${e.message}');
+        print('Error Response: ${e.response}');
+      }
       print('=================');
       return false;
     }
@@ -617,8 +712,7 @@ Future<void> _saveShopTagging() async {
         });
       },
       value: _selecteddistCategory,
-      validator: (value) =>
-          value == null ? 'Please select a Territory' : null,
+      validator: (value) => value == null ? 'Please select a Territory' : null,
     );
   }
 
@@ -795,9 +889,10 @@ Future<void> _saveShopTagging() async {
                         child: Text(
                           'Offline Data',
                           style: GoogleFonts.lato(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       )
                     ],
@@ -992,7 +1087,7 @@ Future<void> _saveShopTagging() async {
                           keyboardType: TextInputType.number,
                           controller: _secondaryPhone,
                           decoration: InputDecoration(
-                            hintText: 'Secondary Phone No',
+                            hintText: 'Secondary Phone No  - Optional',
                             hintStyle: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 16,

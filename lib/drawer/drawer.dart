@@ -173,7 +173,14 @@ class _CustomDrawerState extends State<CustomDrawer> {
             ),
           ),
           // role == 'DSF' && role == 'ASE' && role == 'ASD' ?
-          ListTile(
+         Visibility(
+              visible: role == "ASE" ||
+                  role == "ZSM" ||
+                  role == "RSM" ||
+                  role == "ASD" ||
+                  role == "RSM" ||
+                  role == "DSF",
+              child:  ListTile(
             leading: const Icon(
               Icons.shopping_bag_outlined,
               color: Colors.red,
@@ -186,16 +193,26 @@ class _CustomDrawerState extends State<CustomDrawer> {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => ShopTagging(shopId: 0,)));
             },
-          ),
+          )),
 
-          ListTile(
+        Visibility(
+              visible: role == "ASE" ||
+                  role == "ZSM" ||
+                  role == "RSM" ||
+                  role == "ASD" ||
+                  role == "RSM" ||
+                  role == "DSF",  
+              child:   ListTile(
             leading: const Icon(
               Icons.shopping_bag_outlined,
               color: Colors.red,
             ),
             title: const Text(
               'Shop Tagging Offline',
-              style: TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(fontWeight: FontWeight.w500
+              
+              
+              ),
             ),
             onTap: () {
               Navigator.push(
@@ -203,10 +220,17 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   MaterialPageRoute(
                       builder: (context) => const ShopTaggingOffline()));
             },
-          ),
+          )),
           // : SizedBox.shrink(),
           // role == 'DSF' && role == 'ASE' && role == 'ASD' ?
-          ListTile(
+       Visibility(
+              visible: role == "ASE" ||
+                  role == "ZSM" ||
+                  role == "RSM" ||
+                  role == "ASD" ||
+                  role == "RSM" ||
+                  role == "DSF",
+              child:    ListTile(
             leading: const Icon(
               Icons.history,
               color: Colors.red,
@@ -221,7 +245,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   MaterialPageRoute(
                       builder: (context) => const Tagging_History()));
             },
-          ),
+          )),
           // : SizedBox.shrink(),
           Visibility(
             visible: role == "ASD",
@@ -300,8 +324,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
               },
             ),
           ),
-
-          ListTile(
+        
+          Visibility(
+              visible: role == "ASE" ||
+                  role == "ZSM" ||
+                  role == "RSM" ||
+                  role == "ASD" ||
+                  role == "RSM" ||
+                  role == "DSF",
+              child: ListTile(
             leading: const Icon(
               Icons.warehouse,
               color: Colors.red,
@@ -318,7 +349,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                             dealershipInformation: dealershipInformation,
                           )));
             },
-          ),
+              )),
           role == "ASE" || role == "ZSM"
               ? ListTile(
                   leading: const Icon(
@@ -340,6 +371,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   },
                 )
               : const SizedBox.shrink(),
+
           // ListTile(
           //   leading: Icon(
           //     Icons.cleaning_services_rounded,
@@ -351,11 +383,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
           //       'Authorization': '6XesrAM2Nu'
           //     };qa
           //     var request = http.Request('GET', Uri.parse('${Constants.BASE_URL}/api/App/ClearLog1?appDateTime=${getCurrentDateTime()}'));
-          //
+          
           //     request.headers.addAll(headers);
-          //
+          
           //     http.StreamedResponse response = await request.send();
-          //
+          
           //     if (response.statusCode == 200) {
           //       print(await response.stream.bytesToString());
           //       Fluttertoast.showToast(
@@ -454,10 +486,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
           //1.3.1.xx for qa Url xx=> updates
 
           const Spacer(),
-          const ListTile(
-            leading: Text('App Version'),
-            trailing: Text('V1.2.4'),
-          ),
+          // const ListTile(
+          //   leading: Text('App Version'),
+          //   trailing: Text('V1.2.4'),
+          // ),
         ],
       ),
     );

@@ -75,7 +75,10 @@ class ShopTaggingModel {
   final DateTime createdAt;
 
   @HiveField(23)
-  final int id; // Added id field
+  final int id;
+
+  @HiveField(24) // New field for duplicate tracking
+  bool isDuplicate;
 
   ShopTaggingModel({
     required this.userId,
@@ -101,12 +104,13 @@ class ShopTaggingModel {
     required this.secondaryPhoneNo,
     this.isSynced = false,
     required this.createdAt,
-    this.id = 0, // Default value for id
+    this.id = 0,
+    this.isDuplicate = false, // Initialize as false
   });
 
   Map<String, dynamic> toJson() {
     return {
-      "command": "SaveShopTagging", // Added the required command field
+      "command": "SaveShopTagging",
       "id": id,
       "userId": userId,
       "TerritoryId": TerritoryId,
@@ -119,7 +123,7 @@ class ShopTaggingModel {
       "imageExtension": imageExtension,
       "lat": lat,
       "lng": lng,
-      "imageFileSource": imageFileSource.split('|||'), // Convert to array
+      "imageFileSource": imageFileSource.split('|||'),
       "shopTypeId": shopTypeId,
       "pepsiFridge": pepsiFridge,
       "cokeFridge": cokeFridge,

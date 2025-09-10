@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:KhilafatCola/ASD/asd_dashboard.dart';
 import 'package:KhilafatCola/Home/home.dart';
 import 'package:KhilafatCola/MarkAttendence/attendence.dart';
+import 'package:KhilafatCola/Secondary%20Sales/disturbutor.dart';
 import 'package:KhilafatCola/Supervisor/sup_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -852,13 +853,13 @@ class _SplashScreenState extends State<SplashScreen>
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const ZSMDashboard()),
               );
-            } else if (role == 'audit') {
+            } else if (role == 'Audit Executive') {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const MarkAttedence()),
               );
             } else if (role == 'Distributor') {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const MarkAttedence()),
+                MaterialPageRoute(builder: (context) => const Disturbutor()),
               );
             }
           });

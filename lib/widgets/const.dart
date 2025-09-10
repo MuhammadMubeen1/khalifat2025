@@ -1,6 +1,8 @@
 class Constants {
-  static const String BASE_URL =  "http://202.166.160.200:9086"; 
-  //"https://app.khilafatcola.com";
+  static const String BASE_URL =
+    
+   //"http://202.166.160.200:9086"; 
+  "https://app.khilafatcola.com";
  
   //"https://app.khilafatcola.com";
   // "http://202.166.160.200:9086";

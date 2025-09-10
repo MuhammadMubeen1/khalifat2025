@@ -675,9 +675,12 @@
 
 
 
+
+
 import 'dart:convert';
 import 'package:KhilafatCola/Home/home.dart';
 import 'package:KhilafatCola/MarkAttendence/attendence.dart';
+import 'package:KhilafatCola/Secondary%20Sales/disturbutor.dart';
 import 'package:KhilafatCola/ZSM/zsm_dashboard.dart';
 import 'package:KhilafatCola/main.dart';
 import 'package:KhilafatCola/model/user_model.dart';
@@ -1065,11 +1068,11 @@ class _LoginScreenState extends State<LoginScreen> {
           case 'ASD':
             destination = const ASDDashboard();
             break;
-          case 'audit':
+          case 'Audit Executive':
             destination = const MarkAttedence();
             break;
           case 'Distributor':
-            destination = const MarkAttedence();
+            destination = const Disturbutor();
             break;
 
           case 'ASM':

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:KhilafatCola/utils/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -26,6 +28,8 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
   final Dio _dio = Dio();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
+  final TextEditingController _phoneController = TextEditingController();
+  int? _editingIndex;
 
   @override
   void initState() {
@@ -39,6 +43,7 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
   @override
   void dispose() {
     _isMounted = false;
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -65,11 +70,25 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
     });
   }
 
+  void _showTopToast(String message, Color backgroundColor) {
+    _scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height - 100,
+          right: 20,
+          left: 20,
+        ),
+      ),
+    );
+  }
+
   Future<void> _syncAllOfflineData() async {
     if (!_isConnected) {
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('No internet connection available')),
-      );
+      _showTopToast('No internet connection available', Colors.red);
       return;
     }
 
@@ -83,12 +102,19 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
         _shopTaggingBox.values.where((item) => !item.isSynced).toList();
     int successCount = 0;
     int failedCount = 0;
+    int duplicateCount = 0;
 
     for (final data in unsyncedData) {
       try {
-        // Create the payload with the original createdAt timestamp
+        // Skip duplicate items in bulk sync
+        if (data.isDuplicate) {
+          duplicateCount++;
+          continue;
+        }
+
         final payload = data.toJson();
-        payload['createdAt'] = DateTime.now();
+        payload['createdAt'] = DateTime.now().toIso8601String();
+        payload['appDateTime'] = DateTime.now().toIso8601String();
 
         final response = await _dio.post(
           '${Constants.BASE_URL}/api/App/SaveShopTaggingByTerritoryId',
@@ -103,17 +129,48 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
         );
 
         if (response.statusCode == 200) {
-          data.isSynced = true;
+          final responseData = response.data;
+          if (responseData is Map &&
+              responseData.containsKey('Status') &&
+              responseData['Status'] == 412 &&
+              responseData.containsKey('Message') &&
+              responseData['Message']
+                  .toString()
+                  .toLowerCase()
+                  .contains('duplicate')) {
+            data.isDuplicate = true;
+            duplicateCount++;
+          } else {
+            data.isSynced = true;
+            successCount++;
+          }
+
           final key = _shopTaggingBox
               .keyAt(_shopTaggingBox.values.toList().indexOf(data));
           await _shopTaggingBox.put(key, data);
-          successCount++;
+        } else if (response.statusCode == 400 || response.statusCode == 412) {
+          final responseData = response.data;
+          if (responseData is Map &&
+              ((responseData.containsKey('Status') &&
+                      responseData['Status'] == 412) ||
+                  (responseData.containsKey('message') &&
+                      responseData['message']
+                          .toString()
+                          .toLowerCase()
+                          .contains('duplicate')))) {
+            data.isDuplicate = true;
+            duplicateCount++;
+
+            final key = _shopTaggingBox
+                .keyAt(_shopTaggingBox.values.toList().indexOf(data));
+            await _shopTaggingBox.put(key, data);
+          } else {
+            failedCount++;
+          }
         } else {
-          print('Failed to sync: ${response.statusCode} - ${response.data}');
           failedCount++;
         }
       } catch (e) {
-        print('Error syncing data: $e');
         failedCount++;
       }
     }
@@ -123,22 +180,37 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
         _isSyncing = false;
       });
 
-      if (successCount > 0 || failedCount > 0) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text(
-              successCount == unsyncedData.length
-                  ? 'All data synced successfully!'
-                  : 'Synced $successCount/${unsyncedData.length} items',
-            ),
-            backgroundColor: successCount == unsyncedData.length
-                ? Colors.green
-                : successCount > 0
-                    ? Colors.orange
-                    : Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+      if (successCount > 0 || failedCount > 0 || duplicateCount > 0) {
+        String message;
+        Color backgroundColor;
+
+        if (successCount > 0 && duplicateCount == 0 && failedCount == 0) {
+          message = 'All $successCount items synced successfully!';
+          backgroundColor = Colors.green;
+        } else if (successCount > 0 && duplicateCount > 0 && failedCount == 0) {
+          message =
+              '$successCount items synced, $duplicateCount duplicates found';
+          backgroundColor = Colors.orange;
+        } else if (successCount > 0 && failedCount > 0 && duplicateCount == 0) {
+          message = '$successCount items synced, $failedCount failed';
+          backgroundColor = Colors.orange;
+        } else if (successCount == 0 &&
+            duplicateCount > 0 &&
+            failedCount == 0) {
+          message = '$duplicateCount duplicate items found';
+          backgroundColor = Colors.orange;
+        } else if (successCount == 0 &&
+            failedCount > 0 &&
+            duplicateCount == 0) {
+          message = 'All $failedCount items failed to sync';
+          backgroundColor = Colors.red;
+        } else {
+          message =
+              'Synced: $successCount, Duplicates: $duplicateCount, Failed: $failedCount';
+          backgroundColor = Colors.orange;
+        }
+
+        _showTopToast(message, backgroundColor);
       }
     }
   }
@@ -171,21 +243,13 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
       if (_isMounted) {
         setState(() {});
       }
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('Shop tagging data deleted'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showTopToast('Shop tagging data deleted', Colors.red);
     }
   }
 
   Future<void> _syncSingleItem(int index) async {
     if (!_isConnected) {
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('No internet connection available')),
-      );
-      debugPrint("❌ Sync failed: No internet connection.");
+      _showTopToast('No internet connection available', Colors.red);
       return;
     }
 
@@ -193,12 +257,10 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
       _isSyncing = true;
     });
 
-    // Get all unsynced items to find the correct index
     final unsyncedItems =
         _shopTaggingBox.values.where((item) => !item.isSynced).toList();
 
     if (index >= unsyncedItems.length) {
-      // Item might have been synced already
       setState(() {
         _isSyncing = false;
       });
@@ -209,7 +271,6 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
     final actualIndex = _shopTaggingBox.values.toList().indexOf(item);
 
     if (actualIndex == -1 || item.isSynced) {
-      debugPrint("ℹ️ Item is null or already synced. Skipping...");
       setState(() {
         _isSyncing = false;
       });
@@ -217,13 +278,9 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
     }
 
     try {
-      debugPrint("➡️ Sending sync request for item at index $actualIndex...");
-
-      // Create the payload with the original createdAt timestamp
       final payload = item.toJson();
-      payload['createdAt'] = DateTime.now();
-
-      debugPrint("📦 Payload: $payload");
+      payload['createdAt'] = DateTime.now().toIso8601String();
+      payload['appDateTime'] = DateTime.now().toIso8601String();
 
       final response = await _dio.post(
         '${Constants.BASE_URL}/api/App/SaveShopTaggingByTerritoryId',
@@ -237,38 +294,46 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
         ),
       );
 
-      debugPrint("📡 Response Status: ${response.statusCode}");
-      debugPrint("📡 Response Data: ${response.data}");
-
       if (response.statusCode == 200) {
-        item.isSynced = true;
+        final responseData = response.data;
+        if (responseData is Map &&
+            responseData.containsKey('Status') &&
+            responseData['Status'] == 412 &&
+            responseData.containsKey('Message') &&
+            responseData['Message']
+                .toString()
+                .toLowerCase()
+                .contains('duplicate')) {
+          item.isDuplicate = true;
+          _showTopToast('Duplicate phone number detected!', Colors.orange);
+        } else {
+          item.isSynced = true;
+          item.isDuplicate = false;
+          _showTopToast('Shop data synced successfully!', Colors.green);
+        }
+
         await _shopTaggingBox.putAt(actualIndex, item);
-        debugPrint("✅ Data synced successfully for index $actualIndex.");
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('Data synced successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      } else if (response.statusCode == 400 || response.statusCode == 412) {
+        final responseData = response.data;
+        if (responseData is Map &&
+            ((responseData.containsKey('Status') &&
+                    responseData['Status'] == 412) ||
+                (responseData.containsKey('message') &&
+                    responseData['message']
+                        .toString()
+                        .toLowerCase()
+                        .contains('duplicate')))) {
+          item.isDuplicate = true;
+          await _shopTaggingBox.putAt(actualIndex, item);
+          _showTopToast('Duplicate phone number detected!', Colors.orange);
+        } else {
+          _showTopToast('Failed to sync shop data', Colors.red);
+        }
       } else {
-        debugPrint(
-            "❌ Failed to sync item at index $actualIndex. Status: ${response.statusCode}, Data: ${response.data}");
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('Failed to sync data'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showTopToast('Failed to sync shop data', Colors.red);
       }
-    } catch (e, stack) {
-      debugPrint("🔥 Exception while syncing item at index $actualIndex: $e");
-      debugPrint("🔥 Stacktrace: $stack");
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (e) {
+      _showTopToast('Error syncing shop: $e', Colors.red);
     } finally {
       if (_isMounted) {
         setState(() {
@@ -277,6 +342,9 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
       }
     }
   }
+
+  
+  
 
   @override
   Widget build(BuildContext context) {
@@ -351,13 +419,12 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
                 child: ValueListenableBuilder(
                   valueListenable: _shopTaggingBox.listenable(),
                   builder: (context, Box<ShopTaggingModel> box, _) {
-                    // Filter to show only unsynced items
-                    final unsyncedItems = box.values
+                    final pendingItems = box.values
                         .where((item) => !item.isSynced)
                         .toList()
                         .cast<ShopTaggingModel>();
 
-                    if (unsyncedItems.isEmpty) {
+                    if (pendingItems.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -390,15 +457,20 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
 
                     return ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: unsyncedItems.length,
+                      itemCount: pendingItems.length,
                       itemBuilder: (context, index) {
-                        final item = unsyncedItems[index];
+                        final item = pendingItems[index];
+                        final isDuplicate = item.isDuplicate;
+                        final actualIndex =
+                            _shopTaggingBox.values.toList().indexOf(item);
+
                         return Card(
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
                           margin: const EdgeInsets.only(bottom: 16),
+                          color: isDuplicate ? Colors.orange[50] : null,
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(
@@ -414,7 +486,9 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
                                         style: GoogleFonts.lato(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.red[800],
+                                          color: isDuplicate
+                                              ? Colors.orange[800]
+                                              : Colors.red[800],
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -423,13 +497,17 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Colors.orange[100],
+                                        color: isDuplicate
+                                            ? Colors.orange[100]
+                                            : Colors.red[100],
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        'Pending',
+                                        isDuplicate ? 'Duplicate' : 'Pending',
                                         style: GoogleFonts.lato(
-                                          color: Colors.orange[800],
+                                          color: isDuplicate
+                                              ? Colors.orange[800]
+                                              : Colors.red[800],
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -439,8 +517,53 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
                                 const SizedBox(height: 8),
                                 _buildDetailRow(
                                     Icons.person, 'Owner', item.ownerName),
-                                _buildDetailRow(
-                                    Icons.phone, 'Phone', item.phoneNo),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.phone,
+                                        size: 16, color: Colors.grey[600]),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: GoogleFonts.lato(
+                                            color: Colors.grey[800],
+                                            fontSize: 14,
+                                          ),
+                                          children: [
+                                            const TextSpan(
+                                              text: 'Phone: ',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            TextSpan(text: item.phoneNo),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                   
+                                  ],
+                                ),
+                                if (isDuplicate)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.warning,
+                                            size: 16,
+                                            color: Colors.orange[800]),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Duplicate phone number - already exists in system',
+                                          style: GoogleFonts.lato(
+                                            color: Colors.orange[800],
+                                            fontSize: 12,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 _buildDetailRow(
                                     Icons.location_on, 'Address', item.address),
                                 if (item.landmark.isNotEmpty)
@@ -476,27 +599,6 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
                                           'Others', item.othersFridge),
                                   ],
                                 ),
-                                // if (item.imagePath.isNotEmpty)
-                                //   Column(
-                                //     crossAxisAlignment:
-                                //         CrossAxisAlignment.start,
-                                //     children: [
-                                //       const SizedBox(height: 12),
-                                //       Text(
-                                //         'Image:',
-                                //         style: GoogleFonts.lato(
-                                //           fontWeight: FontWeight.bold,
-                                //         ),
-                                //       ),
-                                //       const SizedBox(height: 4),
-                                //       Image.file(
-                                //         File(item.imagePath),
-                                //         height: 100,
-                                //         width: double.infinity,
-                                //         fit: BoxFit.cover,
-                                //       ),
-                                //     ],
-                                //   ),
                                 const SizedBox(height: 12),
                                 Row(
                                   mainAxisAlignment:
@@ -512,42 +614,63 @@ class _OfflineShopTaggingScreenState extends State<OfflineShopTaggingScreen> {
                                     ),
                                     Row(
                                       children: [
-                                        ElevatedButton.icon(
-                                          onPressed: _isSyncing
-                                              ? null
-                                              : () => _syncSingleItem(index),
-                                          icon:
-                                              const Icon(Icons.sync, size: 16),
-                                          label: Text(
-                                            'Sync Now',
-                                            style:
-                                                GoogleFonts.lato(fontSize: 12),
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red[800],
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 8),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
+                                        if (!isDuplicate)
+                                          ElevatedButton.icon(
+                                            onPressed: _isSyncing
+                                                ? null
+                                                : () => _syncSingleItem(index),
+                                            icon: const Icon(Icons.sync,
+                                                size: 16),
+                                            label: Text(
+                                              'Sync Now',
+                                              style: GoogleFonts.lato(
+                                                  fontSize: 12),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red[800],
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                        if (isDuplicate)
+                                          ElevatedButton.icon(
+                                            onPressed: _isSyncing
+                                                ? null
+                                                : () => _syncSingleItem(index),
+                                            icon: const Icon(Icons.sync,
+                                                size: 16),
+                                            label: Text(
+                                              'Resend',
+                                              style: GoogleFonts.lato(
+                                                  fontSize: 12),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Colors.orange[800],
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                            ),
+                                          ),
                                         const SizedBox(width: 8),
                                         IconButton(
                                           icon: const Icon(Icons.delete,
                                               color: Colors.red),
-                                          onPressed: () {
-                                            // Find the actual index in the box
-                                            final actualIndex = _shopTaggingBox
-                                                .values
-                                                .toList()
-                                                .indexOf(item);
-                                            if (actualIndex != -1) {
-                                              _deleteItem(actualIndex);
-                                            }
-                                          },
+                                          onPressed: () =>
+                                              _deleteItem(actualIndex),
                                         ),
                                       ],
                                     ),
