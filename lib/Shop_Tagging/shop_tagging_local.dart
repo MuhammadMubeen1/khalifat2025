@@ -565,8 +565,9 @@ class _ShopTaggingState extends State<ShopTaggingOffline> {
       "nestleFridge": shopTagging.nestleFridge,
       "nesfrutaFridge": shopTagging.nesfrutaFridge,
       "othersFridge": shopTagging.othersFridge,
-      "appDateTime": DateTime(2020, 1, 1).toIso8601String(),
-      //  shopTagging.appDateTime,
+      "appDateTime":
+      // DateTime(2020, 1, 1).toIso8601String(),
+       shopTagging.appDateTime,
       "landmark": shopTagging.landmark,
       "secondaryPhoneNo": shopTagging.secondaryPhoneNo,
     };
